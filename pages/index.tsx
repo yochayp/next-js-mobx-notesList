@@ -2,12 +2,11 @@ import Head from 'next/head'
 import React from "react";
 import axios from 'axios';
 import { useLocalStore } from 'mobx-react' // 6.x or mobx-react-lite@1.4.0
-import { createStore, TStore } from '../stores/notesStore'
+import { TStore } from '../stores/notesStore'
 import ServerRequests from '../utils/serverRequests'
 
 import NavbarView from '../components/navbarview'
 import ListView from '../components/listview'
-import serverRequests from '../utils/serverRequests';
 import { toJS } from 'mobx';
 
 
@@ -20,46 +19,34 @@ const Index = (props) => {
         const value = useLocalStore(
             source => ({
 
-            noteslist: props.notes
-            ,
-            addNote(note) {
-                ServerRequests.addNote(note);
-                this.noteslist.push(note);
-            },
+                noteslist: props.notes
+                ,
+                addNote(note) {
+                    ServerRequests.addNote(note);
+                    this.noteslist.push(note);
+                },
 
-            toggleItem(lastnote, lastitem) {
-               /* const newItemsList = lastnote.itemsList.map(item => {
-                    if (item.id !== lastitem.id) return item
-                    else return newItem
-                })
-                const newNote = {
-                    id: lastnote.id,
-                    name: lastnote.name,
-                    itemsList: newItemsList,
-                    dateCreated: lastnote.dateCreated,
-                    dateUpdated: new Date().toLocaleString()
+                toggleItem(lastnote, lastitem) {
+
+                    this.noteslist.forEach((item, noteIndex) => {
+                        if (item.id == lastnote) {
+                            this.noteslist[noteIndex].itemsList.forEach((item, itemIndex) => {
+                                if (item.id == lastitem) {
+                                    this.noteslist[noteIndex].itemsList[itemIndex].checked = !this.noteslist[noteIndex].itemsList[itemIndex].checked
+                                    const newNote = toJS(this.noteslist[noteIndex]);
+                                    ServerRequests.updateNote(newNote);
+                                }
+                            })
+                        }
+                    })
+
+                },
+                removeNote(selectedNote) {
+                    this.noteslist = this.noteslist.filter(note => note.id !== selectedNote.id);
+                    ServerRequests.deleteNote(selectedNote.id);
+
                 }
-                this.noteslist = this.noteslist.map(note => {
-                    if (note.id !== lastnote.id) return note
-                    else return newNote
-                })*/
-
-                this.noteslist.forEach((item,noteIndex) => {
-                    if(item.id == lastnote){
-                        this.noteslist[noteIndex].itemsList.forEach((item,itemIndex) => {
-                            if(item.id == lastitem) 
-                             {   this.noteslist[noteIndex].itemsList[itemIndex].checked = ! this.noteslist[noteIndex].itemsList[itemIndex].checked
-                               const newNote= toJS(this.noteslist[noteIndex]);
-                                ServerRequests.updateNote(newNote);
-                    }  })}})
-                    
-            },
-            removeNote(selectedNote) {
-                this.noteslist = this.noteslist.filter(note => note.id !== selectedNote.id);
-                ServerRequests.deleteNote(selectedNote.id);
-
-            }
-        }), props,
+            }), props,
         )
         return <storeContext.Provider value={value}>{children}</storeContext.Provider>;
     };
@@ -86,7 +73,6 @@ Index.getInitialProps = async () => {
     res.data.forEach(element => {
         delete element._id;
         delete element.__v;
-        
     });
     return { notes: res.data }
 }
